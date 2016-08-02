@@ -1,0 +1,16 @@
+.Rhistory
+[0-9]*
+*.Rmd
+*.html
+temp
+outputs
+figures
+gis/
+*~
+*figure-latex
+*figure-docx
+*.rds
+originalData
+notes
+documentation
+
