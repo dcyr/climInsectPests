@@ -98,7 +98,7 @@ shinyServer(function(input, output) {#, session) {
         output$tsPlot <- renderPlot({
             plotTs(df(),
                    z = zoneName,
-                   var = input$var,
+                   var = vars[input$var],
                    minYear = input$range[1],
                    maxYear = input$range[2])
         })

@@ -17,8 +17,16 @@ ecoregions <- get(load("./data/ecoregionPoly.RData"))
 dfEcozones <- read.csv("./data/dfEcozones.csv")
 dfEcoregions <- read.csv("./data/dfEcoregions.csv")
 
-vars <- c("Mountain Pine Beetle - Logan Probability" = "LoganProbability",
-          "Spruce Budworm - Growth Rate" = "GrowthRate")
+dfEcozones[, "date"] <- as.Date(paste0(dfEcozones$year, "-07-01"))
+dfEcoregions[, "date"] <-  as.Date(paste0(dfEcoregions$year, "-07-01"))
+
+vars <- c("Spruce Budworm - Growth Rate" = "GrowthRate",
+          "Mountain Pine Beetle - Logan Probability" = "LoganProbability",
+          "Mountain Pine Beetle - Safranyik Probability" = "SafranyikProbability",
+          "Forest Tent Caterpillar - Peak Adult Emergeance" = "PeakAdultEmergence",
+          "Forest Tent Caterpillar - Peak Hatch Day" = "PeakHatchDay",
+          "Forest Tent Caterpillar - Peak Pupation" = "PeakPupation"
+)
 
 
 ### reordering levels for cleaner display
@@ -75,19 +83,33 @@ pal <- c("palegreen",
 
 
 
-plotTs <- function(df = df, z, var, minYear, maxYear) {
+plotTs <- function(df = df, z, var, minYear, maxYear,
+                   level = 0.95, method = "lm") {
+    require(Hmisc) # for stat_summary(fun.data = )
     # raw time series
-    ts <- df[df$year >= minYear &
-                 df$year <= maxYear &
+    ts <- df[df$date >= minYear &
+                 df$date <= maxYear &
                  df[,2] == z, ]
-    
-    ts <- ts[, c("year", var)]
+    ts <- ts[, c("date", var)]
     ts <- ts[complete.cases(ts),]
-
-    tsPlot <- ggplot(ts, aes_string("year", var)) +
+    ## plot lim
+    ylim <-range(ts[,var])
+    
+    
+    kendallResults <- Kendall::MannKendall(x = ts[,var])
+    kTau <- round(as.numeric(kendallResults[1]), 3)
+    kPval <- round(as.numeric(kendallResults[2]), 4)
+    
+    tsPlot <- ggplot(ts, aes_string("date", var)) +
         geom_line() +
-        labs(y = names(vars)[which(vars == var)],
-             title = "Add title here")
+        stat_smooth(method = method, level = level) +
+        labs(y = vars[which(vars == var)],
+             title = paste0(z, "\n", names(vars)[which(vars == var)])) +
+        annotate("text", label = c(paste("Kendall's tau =", kTau),
+                                   paste("2-sided pvalue =", kPval)),
+                 x = rep(maxYear,2),
+                 y = c(ylim[2], ylim[1]+(0.90*diff(ylim))),
+                 hjust = 1)
         
     return(tsPlot)
 }
