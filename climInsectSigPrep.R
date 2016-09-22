@@ -47,9 +47,14 @@ can <- gSimplify(can1, tol = 0.1, topologyPreserve=T)
 usa <- gSimplify(usa1, tol = 0.1, topologyPreserve=T)
 ## reference raster Can + Continental US
 refRaster <- raster("./gis/refRaster.tif")
+
+####################
 ##### loading ecoregions and ecozones
 ecoregions <- readOGR(dsn = "./gis/Ecoregions", layer = "ecoregions")
 ecozones <- readOGR(dsn = "./gis/Ecozones", layer = "ecozones")
+
+
+
 # ecodistricts <- readOGR(dsn = "./gis/Ecodistricts", layer = "ecodistricts")
 # ecoprovinces <-  readOGR(dsn = "./gis/Ecoprovinces", layer = "ecoprovinces")
 ## extracting ecozone names
@@ -68,8 +73,6 @@ foo <- as.data.frame(ecoregions)
 ecozones <- gUnaryUnion(ecoregions, id = ecoregions@data$ZONE_NAME)
 
 
-
-plot(ecozones)
 #foo <- SpatialPolygonsDataFrame(ecozones, data.frame("ZONE_NAME" = row.names(ecozones)))
 # If you want to recreate an object with a data frame
 # make sure row names match
@@ -78,10 +81,69 @@ row.names(ecozones) <- as.character(1:length(ecozones))
 foo <- as.data.frame(foo)
 colnames(foo) <- "ZONE_NAME"  
 ecozones <- SpatialPolygonsDataFrame(ecozones, foo)
+
+### reordering levels for cleaner display
+ecozoneLevels <-c("MixedWood Plain",
+                  "Atlantic Maritime",
+                  "Boreal Shield West",
+                  "Boreal Shield East",
+                  "Prairie",
+                  "Boreal Plain",
+                  "Montane Cordillera",
+                  "Pacific Maritime",
+                  "Boreal Cordillera",
+                  "Taiga Shield",
+                  "Taiga Plain",
+                  "Taiga Cordillera",
+                  "Hudson Plain",
+                  "Southern Arctic",
+                  "Northern Arctic",
+                  "Arctic Cordillera")
+
+
+ecozones$ZONE_NAME <- factor(ecozones$ZONE_NAME, levels = ecozoneLevels)
+ecoregions$ZONE_NAME <- factor(ecoregions$ZONE_NAME, levels = ecozoneLevels)
+
+
 # write new polygons to disk
 save(ecozones, file = "ecozonePoly.RData")
 save(ecoregions, file = "ecoregionPoly.RData")
 
+
+# extract forested ecozones
+ecozoneSubsample <- c("MixedWood Plain",
+                      "Atlantic Maritime",
+                      "Boreal Shield West",
+                      "Boreal Shield East",
+                      "Prairie",
+                      "Boreal Plain",
+                      "Montane Cordillera",
+                      "Pacific Maritime",
+                      "Boreal Cordillera",
+                      "Taiga Shield",
+                      "Taiga Plain",
+                      "Taiga Cordillera",
+                      "Hudson Plain")
+
+ecoregions <- ecoregions[ecoregions$ZONE_NAME %in% ecozoneSubsample,]
+ecozones <- ecozones[ecozones$ZONE_NAME %in% ecozoneSubsample,]
+
+
+### extract attribute data frame (disappears during following steps)
+ZONE_NAME <- ecozones$ZONE_NAME
+ZONE_NAME <- as.data.frame(ZONE_NAME)
+
+### simplifying polygons for faster plotting
+ecozones <- gSimplify(ecozones, tol = 0.005, topologyPreserve=T)
+row.names(ZONE_NAME) <- names(ecozones)
+ecozones <- SpatialPolygonsDataFrame(ecozones, ZONE_NAME)
+foo <- as.data.frame(ecoregions)
+ecoregions <- gSimplify(ecoregions, tol = 0.005, topologyPreserve=T)
+ecoregions <- SpatialPolygonsDataFrame(ecoregions, foo)
+
+# write new polygons to disk
+save(ecozones, file = "ecozonePolyFor.RData")
+save(ecoregions, file = "ecoregionPolyFor.RData")
 
 ## getwd()
 if(project) {

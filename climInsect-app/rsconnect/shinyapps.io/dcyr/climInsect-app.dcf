@@ -2,8 +2,8 @@ name: climInsect-app
 account: dcyr
 server: shinyapps.io
 appId: 117888
-bundleId: 522133
+bundleId: 565440
 url: https://dcyr.shinyapps.io/climInsect-app/
-when: 1470162375.37862
+when: 1474572304.79756
 asMultiple: FALSE
 asStatic: FALSE
